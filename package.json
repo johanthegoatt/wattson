@@ -1,0 +1,10 @@
+{
+  "name": "wattson",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Work out what each thing in your home really costs to run, standby and all, then see which few things eat most of the bill. Runs in the browser, nothing uploaded. With Watt the meter.",
+  "scripts": {
+    "test": "node --test"
+  },
+  "license": "MIT"
+}
