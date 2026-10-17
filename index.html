@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wattson: what each thing costs to run</title>
+<meta name="description" content="Add the things in your home and Wattson works out what each one costs to run for a year, counts the standby you forget about, and keeps the daily standing charge separate so you see what you can actually change.">
+<meta name="theme-color" content="#0f9b8e">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='10' y='8' width='44' height='48' rx='9' fill='%23f3efe2' stroke='%235a5446' stroke-width='3'/%3E%3Crect x='17' y='16' width='30' height='15' rx='3' fill='%230f9b8e'/%3E%3Ccircle cx='24' cy='43' r='4.5' fill='%23fff' stroke='%235a5446' stroke-width='2'/%3E%3Ccircle cx='40' cy='43' r='4.5' fill='%23fff' stroke='%235a5446' stroke-width='2'/%3E%3Ccircle cx='24' cy='43' r='1.6' fill='%23263330'/%3E%3Ccircle cx='40' cy='43' r='1.6' fill='%23263330'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#result">Skip to the total</a>
+<header class="top">
+  <h1>Wattson</h1>
+  <p class="lede">Add the things in your home. Wattson works out what each one costs to run for a year, counts the standby you forget about, and keeps the daily standing charge on its own so you see what you can actually change.</p>
+</header>
+
+<main>
+  <section class="card" id="step-rate" aria-labelledby="h-rate">
+    <h2 id="h-rate"><span class="num">1</span> Your electricity rate</h2>
+    <p class="hint">Both are on your bill. The unit rate is the price of one kWh. The standing charge is a daily fee you pay whatever you use.</p>
+    <div class="row">
+      <label class="field">
+        <span>Currency</span>
+        <select id="cur-pick">
+          <option value="$">$ dollar</option>
+          <option value="£">£ pound</option>
+          <option value="€">€ euro</option>
+          <option value="₱">₱ peso</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>Price per kWh (unit rate)</span>
+        <div class="money"><i aria-hidden="true" class="cur">$</i><input id="rate" inputmode="decimal" autocomplete="off" placeholder="0.30"></div>
+      </label>
+      <label class="field">
+        <span>Standing charge a day <small>(optional)</small></span>
+        <div class="money"><i aria-hidden="true" class="cur">$</i><input id="standing" inputmode="decimal" autocomplete="off" placeholder="0.60"></div>
+      </label>
+    </div>
+  </section>
+
+  <section class="card" id="step-things" aria-labelledby="h-things">
+    <h2 id="h-things"><span class="num">2</span> Your things</h2>
+    <p class="hint">Start from a common one, or add your own. Change the watts and the hours to match yours; the plug label or the maker's page has the real watts.</p>
+    <div class="addbar">
+      <label class="field add-pick">
+        <span class="sr">Add a common appliance</span>
+        <select id="preset" aria-label="Add a common appliance"></select>
+      </label>
+      <button type="button" class="btn" id="add-preset">Add this</button>
+      <button type="button" class="btn ghost" id="add-blank">Add a blank row</button>
+    </div>
+    <div id="rows" class="rows"></div>
+    <p class="empty" id="empty">No things yet. Add one above to see what it costs.</p>
+  </section>
+
+  <section class="card result" id="result" aria-labelledby="h-result" tabindex="-1">
+    <h2 id="h-result"><span class="num">3</span> What it costs</h2>
+    <p class="sub" id="sub"></p>
+
+    <div class="headline" id="headline" hidden>
+      <div class="hl-main">
+        <span class="hl-label">A year to run</span>
+        <span class="hl-amount" id="hl-year">—</span>
+        <span class="hl-sub" id="hl-month"></span>
+      </div>
+    </div>
+
+    <div id="breakdown" aria-live="polite"></div>
+
+    <div class="traps" id="traps" hidden>
+      <h3>Two things that quietly change the number</h3>
+      <ul id="trap-list"></ul>
+    </div>
+
+    <div class="actions">
+      <button type="button" class="btn" id="copy">Copy the list</button>
+      <button type="button" class="btn ghost" id="share">Copy a share link</button>
+    </div>
+    <p class="status" id="status" role="status"></p>
+    <p class="fine">A guide, not a promise. Fridges, heaters and anything with a thermostat switch on and off, so a yearly figure is an estimate. Your real bill also carries tax and any fixed fees.</p>
+  </section>
+</main>
+
+<footer class="foot">
+  <p>Made by Johan · <a href="https://github.com/johanthegoatt/wattson">Source</a></p>
+</footer>
+
+<div class="watt-dock" id="watt-dock">
+  <div class="bubble" id="watt-bubble" role="status" aria-live="polite"></div>
+  <button type="button" class="watt" id="watt" aria-label="Watt the meter. Tap for a tip." data-mood="sleepy">
+    <svg viewBox="0 0 120 120" aria-hidden="true">
+      <g class="w-body">
+        <rect class="w-case" x="18" y="12" width="84" height="96" rx="16"/>
+        <rect class="w-screen" x="30" y="26" width="60" height="26" rx="5"/>
+        <rect class="w-bar" x="35" y="32" width="26" height="6" rx="3"/>
+        <rect class="w-bar w-bar2" x="35" y="42" width="16" height="5" rx="2.5"/>
+        <g class="w-face">
+          <g class="w-eyes">
+            <circle class="w-white" cx="47" cy="78" r="11"/>
+            <circle class="w-white" cx="73" cy="78" r="11"/>
+            <circle class="w-pupil" cx="47" cy="78" r="4"/>
+            <circle class="w-pupil" cx="73" cy="78" r="4"/>
+            <path class="w-closed" d="M38 78 q9 6 18 0 M64 78 q9 6 18 0"/>
+          </g>
+          <circle class="w-cheek" cx="36" cy="90" r="4.5"/>
+          <circle class="w-cheek" cx="84" cy="90" r="4.5"/>
+          <path class="w-mouth happy" d="M52 94 q8 7 16 0"/>
+          <path class="w-mouth worried" d="M52 99 q8 -6 16 0"/>
+          <ellipse class="w-mouth wow" cx="60" cy="96" rx="4.5" ry="5.5"/>
+          <path class="w-mouth sleepy" d="M55 95 h10"/>
+        </g>
+      </g>
+    </svg>
+  </button>
+  <button type="button" class="watt-hide" id="watt-hide" aria-label="Hide Watt">×</button>
+</div>
+
+<template id="row-tpl">
+  <div class="arow">
+    <div class="arow-grid">
+      <label class="field f-name"><span>Thing</span><input class="a-name" autocomplete="off" placeholder="Kettle"></label>
+      <label class="field f-watts"><span>Watts in use</span><input class="a-watts" inputmode="numeric" autocomplete="off" placeholder="2000"></label>
+      <label class="field f-hours"><span>Hours a day</span><input class="a-hours" inputmode="decimal" autocomplete="off" placeholder="1"></label>
+      <label class="field f-standby"><span>Standby watts</span><input class="a-standby" inputmode="decimal" autocomplete="off" placeholder="0"></label>
+      <label class="field f-qty"><span>How many</span><input class="a-qty" inputmode="numeric" autocomplete="off" placeholder="1"></label>
+    </div>
+    <div class="arow-side">
+      <span class="a-cost">—</span>
+      <button type="button" class="a-remove" aria-label="Remove this thing">×</button>
+    </div>
+  </div>
+</template>
+
+<script src="src/engine.js"></script>
+<script src="src/presets.js"></script>
+<script src="src/watt.js"></script>
+<script src="src/app.js"></script>
+</body>
+</html>
