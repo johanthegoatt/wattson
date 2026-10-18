@@ -145,6 +145,7 @@ input[aria-invalid="true"] { border-color: var(--warn); }
 .hl-label { font-size: 0.85rem; font-weight: 600; color: var(--ink-2); }
 .hl-amount { font: 800 2.1rem var(--round); color: var(--accent); line-height: 1.1; }
 .hl-sub { font-size: 0.95rem; color: var(--ink-2); }
+.hl-co2 { display: block; font-size: 0.9rem; color: var(--ink-2); margin-top: 2px; }
 
 /* Per-thing breakdown rows */
 .brow {

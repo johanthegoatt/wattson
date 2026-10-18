@@ -33,6 +33,13 @@
     Array.prototype.forEach.call(document.querySelectorAll(".cur"), function (i) { i.textContent = currency; });
   }
 
+  // Grid carbon, kg CO2e per kWh, chosen from the currency as a rough stand-in
+  // for where you are. Published averages: UK ~0.21 (DESNZ 2024), US ~0.37
+  // (EPA eGRID), euro area ~0.25 (EEA), Philippines ~0.65 (coal-heavy grid).
+  // The $ default leans to the US figure.
+  var CO2_BY_CUR = { "£": 0.21, "$": 0.37, "€": 0.25, "₱": 0.65 };
+  function co2Factor() { return CO2_BY_CUR[currency] || 0.37; }
+
   // ---- rows ----
   function addItem(data) {
     data = data || {};
@@ -98,7 +105,7 @@
 
     $("empty").hidden = items.length > 0;
 
-    var summary = E.billSummary(appliances, { unitRate: rate, standingChargeDay: standing });
+    var summary = E.billSummary(appliances, { unitRate: rate, standingChargeDay: standing, co2PerKwh: co2Factor() });
 
     // per-row live cost
     items.forEach(function (item) {
@@ -142,6 +149,16 @@
     $("hl-month").textContent = standing > 0
       ? "About " + money(s.totalMonth) + " a month, standing charge and all."
       : "About " + money(s.totalMonth) + " a month.";
+    var co2El = $("hl-co2");
+    if (s.co2Year > 0) {
+      var kg = Math.round(s.co2Year);
+      var miles = Math.round(s.drivingMilesYear);
+      co2El.textContent = "About " + kg.toLocaleString() + " kg of CO₂ a year, like driving " + miles.toLocaleString() + " miles.";
+      co2El.hidden = false;
+    } else {
+      co2El.textContent = "";
+      co2El.hidden = true;
+    }
     sub.textContent = "";
 
     // breakdown rows
@@ -195,7 +212,7 @@
   function plainText() {
     var rate = parseFloat(rateEl.value) || 0;
     var standing = parseFloat(standingEl.value) || 0;
-    var s = E.billSummary(items.map(readItem), { unitRate: rate, standingChargeDay: standing });
+    var s = E.billSummary(items.map(readItem), { unitRate: rate, standingChargeDay: standing, co2PerKwh: co2Factor() });
     var lines = ["What it costs to run (Wattson)", ""];
     s.appliances.forEach(function (c) {
       lines.push("- " + c.name + ": " + money(c.costYear) + "/yr" +
@@ -206,6 +223,7 @@
     if (s.standbyCostYear > 0) lines.push("Of that, standby: " + money(s.standbyCostYear) + "/yr");
     if (s.standingChargeYear > 0) lines.push("Standing charge: " + money(s.standingChargeYear) + "/yr (fixed)");
     lines.push("Total: " + money(s.totalYear) + "/yr at " + moneyPrecise(rate) + "/kWh");
+    if (s.co2Year > 0) lines.push("Carbon: about " + Math.round(s.co2Year).toLocaleString() + " kg CO2/yr (like driving " + Math.round(s.drivingMilesYear).toLocaleString() + " miles)");
     return lines.join("\n");
   }
 
