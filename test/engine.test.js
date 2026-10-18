@@ -101,3 +101,27 @@ test("an empty list gives zeroes, not errors", function () {
   assert.strictEqual(s.standbyShare, 0);
   assert.strictEqual(E.round(s.totalYear), 182.5);
 });
+
+test("carbon: kWh times the grid factor, and a driving comparison", function () {
+  // A 1000 W heater on 1 h a day = 1 kWh/day = 365 kWh/year.
+  // At 0.21 kg CO2/kWh that is 76.65 kg a year.
+  var s = E.billSummary([{ name: "Heater", watts: 1000, hoursPerDay: 1 }], { unitRate: 0.3, co2PerKwh: 0.21 });
+  assert.ok(Math.abs(s.co2Year - 76.65) < 1e-6);
+  assert.ok(Math.abs(s.appliances[0].co2Year - 76.65) < 1e-6);
+  // 76.65 kg / 0.4 kg per mile = 191.625 miles.
+  assert.ok(Math.abs(s.drivingMilesYear - 191.625) < 1e-6);
+});
+
+test("no carbon factor means no carbon numbers, not a crash", function () {
+  var s = E.billSummary([{ name: "Lamp", watts: 60, hoursPerDay: 5 }], { unitRate: 0.3 });
+  assert.strictEqual(s.co2Year, 0);
+  assert.strictEqual(s.drivingMilesYear, 0);
+  assert.strictEqual(s.appliances[0].co2Year, 0);
+});
+
+test("carbon scales with the whole list", function () {
+  var items = [{ watts: 1000, hoursPerDay: 1 }, { watts: 1000, hoursPerDay: 1 }];
+  var s = E.billSummary(items, { unitRate: 0.3, co2PerKwh: 0.37 });
+  var one = E.billSummary([items[0]], { unitRate: 0.3, co2PerKwh: 0.37 });
+  assert.ok(Math.abs(s.co2Year - one.co2Year * 2) < 1e-6);
+});

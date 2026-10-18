@@ -89,20 +89,37 @@
     };
   }
 
+  // Carbon from a year of electricity: kWh times the grid's emission factor
+  // (kg CO2e per kWh). About 0.4 kg of CO2 comes out of a petrol car for each
+  // mile, so a year's kWh turns into an easy "that's like driving X miles"
+  // (US EPA: a typical passenger car emits about 400 g CO2 per mile).
+  var KG_CO2_PER_MILE = 0.4;
+
+  function drivingMilesForCo2(kg) {
+    return Math.max(0, num(kg)) / KG_CO2_PER_MILE;
+  }
+
   // The whole picture: every appliance costed and sorted dearest first, the
-  // running total, the standby total, and the standing charge kept on its own.
+  // running total, the standby total, the standing charge kept on its own, and
+  // the carbon if a grid emission factor is given.
   function billSummary(appliances, opts) {
     opts = opts || {};
     var rate = Math.max(0, num(opts.unitRate));
     var standingDay = Math.max(0, num(opts.standingChargeDay));
+    var co2Factor = Math.max(0, num(opts.co2PerKwh));
 
     var list = (appliances || [])
-      .map(function (a) { return applianceCost(a, rate); })
+      .map(function (a) {
+        var c = applianceCost(a, rate);
+        c.co2Year = c.energy.kwhYear * co2Factor;
+        return c;
+      })
       .sort(function (x, y) { return y.costYear - x.costYear; });
 
     var runningYear = list.reduce(function (s, c) { return s + c.costYear; }, 0);
     var standbyYear = list.reduce(function (s, c) { return s + c.standbyCostYear; }, 0);
     var kwhYear = list.reduce(function (s, c) { return s + c.energy.kwhYear; }, 0);
+    var co2Year = kwhYear * co2Factor;
     var standingYear = standingDay * DAYS_PER_YEAR;
     var totalYear = runningYear + standingYear;
 
@@ -129,17 +146,22 @@
       standingChargeYear: standingYear,
       standingChargeShare: totalYear > 0 ? standingYear / totalYear : 0,
       totalYear: totalYear,
-      totalMonth: totalYear / 12
+      totalMonth: totalYear / 12,
+      co2Year: co2Year,
+      co2FactorPerKwh: co2Factor,
+      drivingMilesYear: drivingMilesForCo2(co2Year)
     };
   }
 
   return {
     DAYS_PER_YEAR: DAYS_PER_YEAR,
     WEEKS_PER_YEAR: WEEKS_PER_YEAR,
+    KG_CO2_PER_MILE: KG_CO2_PER_MILE,
     activeHoursPerDay: activeHoursPerDay,
     applianceEnergy: applianceEnergy,
     applianceCost: applianceCost,
     billSummary: billSummary,
+    drivingMilesForCo2: drivingMilesForCo2,
     round: round
   };
 });
