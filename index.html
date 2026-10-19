@@ -38,7 +38,12 @@
         <span>Standing charge a day <small>(optional)</small></span>
         <div class="money"><i aria-hidden="true" class="cur">$</i><input id="standing" inputmode="decimal" autocomplete="off" placeholder="0.60"></div>
       </label>
+      <label class="field">
+        <span>Cheaper night rate <small>(Economy 7, optional)</small></span>
+        <div class="money"><i aria-hidden="true" class="cur">$</i><input id="night-rate" inputmode="decimal" autocomplete="off" placeholder="0.10"></div>
+      </label>
     </div>
+    <p class="hint" id="night-hint" hidden>Tick <b>runs overnight</b> on anything you put on a night timer, like a dishwasher, washing machine or storage heater, and I'll charge it at the night rate.</p>
   </section>
 
   <section class="card" id="step-things" aria-labelledby="h-things">
@@ -128,6 +133,7 @@
       <label class="field f-standby"><span>Standby watts</span><input class="a-standby" inputmode="decimal" autocomplete="off" placeholder="0"></label>
       <label class="field f-qty"><span>How many</span><input class="a-qty" inputmode="numeric" autocomplete="off" placeholder="1"></label>
     </div>
+    <label class="a-night-wrap" hidden><input type="checkbox" class="a-night"> <span>runs overnight (night rate)</span></label>
     <div class="arow-side">
       <span class="a-cost">—</span>
       <button type="button" class="a-remove" aria-label="Remove this thing">×</button>

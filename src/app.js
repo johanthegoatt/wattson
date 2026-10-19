@@ -14,6 +14,7 @@
   var curPick = $("cur-pick");
   var rateEl = $("rate");
   var standingEl = $("standing");
+  var nightEl = $("night-rate");
 
   var currency = "$";
   var items = []; // { el, name, watts, hours, standby, qty }
@@ -50,9 +51,11 @@
       watts: node.querySelector(".a-watts"),
       hours: node.querySelector(".a-hours"),
       standby: node.querySelector(".a-standby"),
-      qty: node.querySelector(".a-qty")
+      qty: node.querySelector(".a-qty"),
+      night: node.querySelector(".a-night")
     };
     item.fields = fields;
+    item.nightWrap = node.querySelector(".a-night-wrap");
     item.costEl = node.querySelector(".a-cost");
 
     fields.name.value = data.name || "";
@@ -63,10 +66,12 @@
     fields.hours.value = h;
     fields.standby.value = data.standbyWatts != null ? data.standbyWatts : "";
     fields.qty.value = data.quantity != null ? data.quantity : "";
+    fields.night.checked = !!data.nightShare;
 
-    Object.keys(fields).forEach(function (k) {
+    ["name", "watts", "hours", "standby", "qty"].forEach(function (k) {
       fields[k].addEventListener("input", recompute);
     });
+    fields.night.addEventListener("change", recompute);
     fields.standby.addEventListener("change", function () {
       if (parseFloat(fields.standby.value) > 0) Watt.react("standby");
     });
@@ -91,7 +96,8 @@
       watts: parseFloat(f.watts.value) || 0,
       hoursPerDay: f.hours.value === "" ? 0 : parseFloat(f.hours.value) || 0,
       standbyWatts: f.standby.value === "" ? 0 : parseFloat(f.standby.value) || 0,
-      quantity: parseInt(f.qty.value, 10) || 1
+      quantity: parseInt(f.qty.value, 10) || 1,
+      nightShare: f.night && f.night.checked ? 1 : 0
     };
   }
 
@@ -101,16 +107,25 @@
   function recompute() {
     var rate = parseFloat(rateEl.value) || 0;
     var standing = parseFloat(standingEl.value) || 0;
+    var nightRaw = nightEl.value.trim();
+    var nightRate = nightRaw === "" ? null : (parseFloat(nightRaw) || 0);
     var appliances = items.map(readItem);
 
     $("empty").hidden = items.length > 0;
 
-    var summary = E.billSummary(appliances, { unitRate: rate, standingChargeDay: standing, co2PerKwh: co2Factor() });
+    // Show the per-row "runs overnight" tick only once a night rate is entered.
+    var showNight = nightRate !== null;
+    $("night-hint").hidden = !showNight;
+    items.forEach(function (item) { item.nightWrap.hidden = !showNight; });
 
-    // per-row live cost
+    var summary = E.billSummary(appliances, { unitRate: rate, standingChargeDay: standing, co2PerKwh: co2Factor(), nightRate: nightRate });
+
+    // per-row live cost, at the night rate when it's ticked and in use
     items.forEach(function (item) {
       var one = E.applianceCost(readItem(item), rate);
-      item.costEl.textContent = rate > 0 && one.costYear > 0 ? money(one.costYear) + "/yr" : "—";
+      var costYear = one.costYear;
+      if (nightRate !== null && item.fields.night.checked) costYear = one.energy.kwhYear * nightRate;
+      item.costEl.textContent = rate > 0 && costYear > 0 ? money(costYear) + "/yr" : "—";
     });
 
     var ready = rate > 0 && items.length > 0;
@@ -127,7 +142,7 @@
       lastBigStandby = false;
     }
 
-    saveToHash(appliances, rate, standing);
+    saveToHash(appliances, rate, standing, nightRate);
   }
 
   function renderResult(s, ready, hasResult, standing) {
@@ -187,6 +202,10 @@
 
     // traps
     var traps = [];
+    if (s.nightRateUsed && s.economySavingYear > 0.5) {
+      traps.push("<b>The night rate is earning its keep.</b> Running the things you've ticked overnight saves about <b>" +
+        money(s.economySavingYear) + " a year</b> against the day rate. Economy 7 only pays off if you move enough use to the cheap hours, so the more you shift, the more this grows.");
+    }
     if (s.standbyCostYear > 0) {
       traps.push("<b>Standby adds up.</b> Things left plugged in but off cost about <b>" +
         money(s.standbyCostYear) + " a year</b> here, " + Math.round(s.standbyShare * 100) +
@@ -212,7 +231,9 @@
   function plainText() {
     var rate = parseFloat(rateEl.value) || 0;
     var standing = parseFloat(standingEl.value) || 0;
-    var s = E.billSummary(items.map(readItem), { unitRate: rate, standingChargeDay: standing, co2PerKwh: co2Factor() });
+    var nightRaw = nightEl.value.trim();
+    var nightRate = nightRaw === "" ? null : (parseFloat(nightRaw) || 0);
+    var s = E.billSummary(items.map(readItem), { unitRate: rate, standingChargeDay: standing, co2PerKwh: co2Factor(), nightRate: nightRate });
     var lines = ["What it costs to run (Wattson)", ""];
     s.appliances.forEach(function (c) {
       lines.push("- " + c.name + ": " + money(c.costYear) + "/yr" +
@@ -222,6 +243,7 @@
     lines.push("Running cost: " + money(s.runningCostYear) + "/yr");
     if (s.standbyCostYear > 0) lines.push("Of that, standby: " + money(s.standbyCostYear) + "/yr");
     if (s.standingChargeYear > 0) lines.push("Standing charge: " + money(s.standingChargeYear) + "/yr (fixed)");
+    if (s.nightRateUsed && s.economySavingYear > 0.5) lines.push("Night rate saving: " + money(s.economySavingYear) + "/yr vs the day rate");
     lines.push("Total: " + money(s.totalYear) + "/yr at " + moneyPrecise(rate) + "/kWh");
     if (s.co2Year > 0) lines.push("Carbon: about " + Math.round(s.co2Year).toLocaleString() + " kg CO2/yr (like driving " + Math.round(s.drivingMilesYear).toLocaleString() + " miles)");
     return lines.join("\n");
@@ -246,11 +268,11 @@
   }
 
   // Compact state in the URL hash so a share link reopens the same list.
-  function saveToHash(appliances, rate, standing) {
+  function saveToHash(appliances, rate, standing, nightRate) {
     try {
       var state = {
-        c: currency, r: rate, s: standing,
-        a: appliances.map(function (a) { return [a.name, a.watts, a.hoursPerDay, a.standbyWatts, a.quantity]; })
+        c: currency, r: rate, s: standing, n: nightRate,
+        a: appliances.map(function (a) { return [a.name, a.watts, a.hoursPerDay, a.standbyWatts, a.quantity, a.nightShare ? 1 : 0]; })
       };
       var enc = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
       history.replaceState(null, "", "#" + enc);
@@ -264,8 +286,9 @@
       if (state.c) { setCurrency(state.c); curPick.value = state.c; }
       if (state.r != null) rateEl.value = state.r || "";
       if (state.s != null) standingEl.value = state.s || "";
+      if (state.n != null) nightEl.value = state.n || "";
       (state.a || []).forEach(function (a) {
-        addItem({ name: a[0], watts: a[1], hoursPerDay: a[2], standbyWatts: a[3], quantity: a[4] });
+        addItem({ name: a[0], watts: a[1], hoursPerDay: a[2], standbyWatts: a[3], quantity: a[4], nightShare: a[5] });
       });
       return (state.a || []).length > 0;
     } catch (e) { return false; }
@@ -288,6 +311,7 @@
   curPick.addEventListener("change", function () { setCurrency(curPick.value); recompute(); });
   rateEl.addEventListener("input", recompute);
   standingEl.addEventListener("input", recompute);
+  nightEl.addEventListener("input", recompute);
 
   $("add-preset").addEventListener("click", function () {
     var p = P[parseInt(presetSel.value, 10) || 0];
