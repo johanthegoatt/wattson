@@ -125,3 +125,47 @@ test("carbon scales with the whole list", function () {
   var one = E.billSummary([items[0]], { unitRate: 0.3, co2PerKwh: 0.37 });
   assert.ok(Math.abs(s.co2Year - one.co2Year * 2) < 1e-6);
 });
+
+// ---- Economy 7 / night rate ----
+
+test("with no night rate, the numbers are unchanged", function () {
+  var s = E.billSummary([{ name: "x", watts: 1000, hoursPerDay: 1 }], { unitRate: 0.30 });
+  assert.strictEqual(s.nightRateUsed, false);
+  assert.strictEqual(s.economySavingYear, 0);
+  // 1 kWh/day * 365 * 0.30 = 109.5
+  assert.strictEqual(E.round(s.runningCostYear), 109.5);
+});
+
+test("an appliance run fully on the night rate costs the night rate", function () {
+  var app = { name: "dishwasher", watts: 1000, hoursPerDay: 1, nightShare: 1 };
+  var s = E.billSummary([app], { unitRate: 0.30, nightRate: 0.10 });
+  assert.strictEqual(s.nightRateUsed, true);
+  assert.strictEqual(E.round(s.runningCostYear), E.round(365 * 0.10)); // 36.5
+  // saving vs day rate: 365 kWh * (0.30 - 0.10) = 73
+  assert.strictEqual(E.round(s.economySavingYear), 73);
+  assert.strictEqual(E.round(s.runningCostYearDayRate), 109.5);
+});
+
+test("a half-and-half night share blends the two rates", function () {
+  var app = { name: "mix", watts: 1000, hoursPerDay: 1, nightShare: 0.5 };
+  var s = E.billSummary([app], { unitRate: 0.30, nightRate: 0.10 });
+  // blended rate 0.20 -> 365 * 0.20 = 73
+  assert.strictEqual(E.round(s.runningCostYear), 73);
+  assert.strictEqual(E.round(s.economySavingYear), 36.5);
+});
+
+test("night share is clamped to 0..1 and missing means day rate", function () {
+  var over = E.billSummary([{ watts: 1000, hoursPerDay: 1, nightShare: 5 }], { unitRate: 0.30, nightRate: 0.10 });
+  assert.strictEqual(E.round(over.runningCostYear), 36.5); // treated as 1
+  var none = E.billSummary([{ watts: 1000, hoursPerDay: 1 }], { unitRate: 0.30, nightRate: 0.10 });
+  assert.strictEqual(E.round(none.runningCostYear), 109.5); // nightShare 0 -> day rate
+  assert.strictEqual(none.economySavingYear, 0);
+});
+
+test("standby cost also follows the blended rate under a night tariff", function () {
+  var app = { name: "tv", watts: 100, hoursPerDay: 4, standbyWatts: 10, nightShare: 1 };
+  var day = E.billSummary([app], { unitRate: 0.30 });
+  var night = E.billSummary([app], { unitRate: 0.30, nightRate: 0.10 });
+  assert.ok(night.standbyCostYear < day.standbyCostYear);
+  assert.strictEqual(E.round(night.standbyCostYear), E.round(day.standbyCostYear / 3));
+});

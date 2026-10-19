@@ -108,10 +108,29 @@
     var standingDay = Math.max(0, num(opts.standingChargeDay));
     var co2Factor = Math.max(0, num(opts.co2PerKwh));
 
+    // Economy 7 and the like charge a cheaper rate for a block of night hours.
+    // If a night rate is given, each appliance can mark the share of its energy
+    // it runs on that cheap rate (a dishwasher on a timer is 1, a fridge that
+    // runs all day is a fraction), and its cost uses a blend of the two rates.
+    // With no night rate, nothing changes and the single-rate numbers stand.
+    var nightRate = opts.nightRate == null || opts.nightRate === "" ? null : Math.max(0, num(opts.nightRate));
+    var nightRateUsed = nightRate != null;
+
     var list = (appliances || [])
       .map(function (a) {
         var c = applianceCost(a, rate);
         c.co2Year = c.energy.kwhYear * co2Factor;
+        c.dayCostYear = c.costYear; // the figure if it all ran on the day rate
+        if (nightRateUsed) {
+          var ns = clamp(num(a.nightShare, 0), 0, 1);
+          var blended = ns * nightRate + (1 - ns) * rate;
+          c.nightShare = ns;
+          c.blendedRate = blended;
+          c.costDay = c.energy.kwhDay * blended;
+          c.costYear = c.energy.kwhYear * blended;
+          c.costMonth = c.costYear / 12;
+          c.standbyCostYear = c.energy.standbyKwhDay * DAYS_PER_YEAR * blended;
+        }
         return c;
       })
       .sort(function (x, y) { return y.costYear - x.costYear; });
@@ -122,6 +141,12 @@
     var co2Year = kwhYear * co2Factor;
     var standingYear = standingDay * DAYS_PER_YEAR;
     var totalYear = runningYear + standingYear;
+
+    // What the running cost would be with everything on the day rate, and so
+    // how much the night rate is saving across the year. Zero when no night
+    // rate is set, or when nothing is marked as running overnight.
+    var runningYearDayRate = list.reduce(function (s, c) { return s + c.dayCostYear; }, 0);
+    var economySavingYear = nightRateUsed ? runningYearDayRate - runningYear : 0;
 
     // The few things that make up most of the running cost. Walk the sorted
     // list until we pass 80% of the running total; those are the ones worth
@@ -145,6 +170,10 @@
       standbyShare: runningYear > 0 ? standbyYear / runningYear : 0,
       standingChargeYear: standingYear,
       standingChargeShare: totalYear > 0 ? standingYear / totalYear : 0,
+      nightRate: nightRate,
+      nightRateUsed: nightRateUsed,
+      runningCostYearDayRate: runningYearDayRate,
+      economySavingYear: economySavingYear,
       totalYear: totalYear,
       totalMonth: totalYear / 12,
       co2Year: co2Year,
