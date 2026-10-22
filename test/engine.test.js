@@ -169,3 +169,29 @@ test("standby cost also follows the blended rate under a night tariff", function
   assert.ok(night.standbyCostYear < day.standbyCostYear);
   assert.strictEqual(E.round(night.standbyCostYear), E.round(day.standbyCostYear / 3));
 });
+
+test("a year-round appliance is unchanged (52 weeks is the default)", function () {
+  var withNone = E.applianceEnergy({ watts: 1000, hoursPerDay: 1 });
+  var with52 = E.applianceEnergy({ watts: 1000, hoursPerDay: 1, weeksPerYear: 52 });
+  assert.strictEqual(withNone.kwhYear, with52.kwhYear);
+  assert.strictEqual(withNone.weeksPerYear, 52);
+});
+
+test("a seasonal heater used half the year costs about half as much a year", function () {
+  var allYear = E.applianceCost({ watts: 2000, hoursPerDay: 4 }, 0.3);
+  var halfYear = E.applianceCost({ watts: 2000, hoursPerDay: 4, weeksPerYear: 26 }, 0.3);
+  // The in-use day is the same; the year is scaled by 26/52.
+  assert.strictEqual(halfYear.costDay, allYear.costDay);
+  assert.ok(Math.abs(halfYear.costYear - allYear.costYear / 2) < 1e-9);
+});
+
+test("standby is scaled by the season too", function () {
+  var c = E.applianceCost({ watts: 1500, hoursPerDay: 3, standbyWatts: 2, weeksPerYear: 13 }, 0.3);
+  var full = E.applianceCost({ watts: 1500, hoursPerDay: 3, standbyWatts: 2 }, 0.3);
+  assert.ok(Math.abs(c.standbyCostYear - full.standbyCostYear / 4) < 1e-9);
+});
+
+test("weeks per year is clamped to a real range", function () {
+  assert.strictEqual(E.applianceEnergy({ watts: 10, hoursPerDay: 1, weeksPerYear: 200 }).weeksPerYear, 52);
+  assert.strictEqual(E.applianceEnergy({ watts: 10, hoursPerDay: 1, weeksPerYear: -5 }).weeksPerYear, 0);
+});
