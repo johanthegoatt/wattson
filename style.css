@@ -119,7 +119,8 @@ input[aria-invalid="true"] { border-color: var(--warn); }
 .arow-grid { display: flex; flex-wrap: wrap; gap: 10px; flex: 1 1 auto; min-width: 0; }
 .arow .field { gap: 3px; }
 .arow .field > span { font-size: 0.76rem; }
-.arow input { min-height: 42px; padding: 8px 10px; }
+.arow input, .arow select { min-height: 42px; padding: 8px 10px; }
+.arow .f-season { flex: 0 0 auto; }
 .f-name { flex: 2 1 140px; }
 .f-watts, .f-hours, .f-standby, .f-qty { flex: 1 1 78px; }
 .arow-side { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex: 0 0 auto; }

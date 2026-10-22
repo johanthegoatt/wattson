@@ -30,8 +30,8 @@
     { name: "Laptop", watts: 50, standbyWatts: 1, hoursPerDay: 6 },
     { name: "Broadband router", watts: 10, standbyWatts: 0, hoursPerDay: 24, note: "on all the time by design" },
     { name: "LED bulb", watts: 8, standbyWatts: 0, hoursPerDay: 5, quantity: 1 },
-    { name: "Space heater", watts: 2000, standbyWatts: 0, hoursPerDay: 3 },
-    { name: "Air conditioner", watts: 1000, standbyWatts: 2, hoursPerDay: 5 },
+    { name: "Space heater", watts: 2000, standbyWatts: 0, hoursPerDay: 3, weeksPerYear: 17, note: "usually only the cold months" },
+    { name: "Air conditioner", watts: 1000, standbyWatts: 2, hoursPerDay: 5, weeksPerYear: 17, note: "usually only the warm months" },
     { name: "Phone charger", watts: 10, standbyWatts: 0.3, hoursPerDay: 2, note: "the trickle it pulls left in the wall is tiny but never stops" }
   ];
 

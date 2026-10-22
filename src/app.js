@@ -52,6 +52,7 @@
       hours: node.querySelector(".a-hours"),
       standby: node.querySelector(".a-standby"),
       qty: node.querySelector(".a-qty"),
+      season: node.querySelector(".a-season"),
       night: node.querySelector(".a-night")
     };
     item.fields = fields;
@@ -66,11 +67,13 @@
     fields.hours.value = h;
     fields.standby.value = data.standbyWatts != null ? data.standbyWatts : "";
     fields.qty.value = data.quantity != null ? data.quantity : "";
+    if (fields.season) fields.season.value = String(data.weeksPerYear != null ? data.weeksPerYear : 52);
     fields.night.checked = !!data.nightShare;
 
     ["name", "watts", "hours", "standby", "qty"].forEach(function (k) {
       fields[k].addEventListener("input", recompute);
     });
+    if (fields.season) fields.season.addEventListener("change", recompute);
     fields.night.addEventListener("change", recompute);
     fields.standby.addEventListener("change", function () {
       if (parseFloat(fields.standby.value) > 0) Watt.react("standby");
@@ -97,6 +100,7 @@
       hoursPerDay: f.hours.value === "" ? 0 : parseFloat(f.hours.value) || 0,
       standbyWatts: f.standby.value === "" ? 0 : parseFloat(f.standby.value) || 0,
       quantity: parseInt(f.qty.value, 10) || 1,
+      weeksPerYear: f.season ? (parseInt(f.season.value, 10) || 52) : 52,
       nightShare: f.night && f.night.checked ? 1 : 0
     };
   }
@@ -272,7 +276,7 @@
     try {
       var state = {
         c: currency, r: rate, s: standing, n: nightRate,
-        a: appliances.map(function (a) { return [a.name, a.watts, a.hoursPerDay, a.standbyWatts, a.quantity, a.nightShare ? 1 : 0]; })
+        a: appliances.map(function (a) { return [a.name, a.watts, a.hoursPerDay, a.standbyWatts, a.quantity, a.nightShare ? 1 : 0, a.weeksPerYear != null ? a.weeksPerYear : 52]; })
       };
       var enc = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
       history.replaceState(null, "", "#" + enc);
@@ -288,7 +292,7 @@
       if (state.s != null) standingEl.value = state.s || "";
       if (state.n != null) nightEl.value = state.n || "";
       (state.a || []).forEach(function (a) {
-        addItem({ name: a[0], watts: a[1], hoursPerDay: a[2], standbyWatts: a[3], quantity: a[4], nightShare: a[5] });
+        addItem({ name: a[0], watts: a[1], hoursPerDay: a[2], standbyWatts: a[3], quantity: a[4], nightShare: a[5], weeksPerYear: a[6] });
       });
       return (state.a || []).length > 0;
     } catch (e) { return false; }
