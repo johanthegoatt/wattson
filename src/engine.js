@@ -57,6 +57,12 @@
     var activeH = activeHoursPerDay(a);
     var standbyH = clamp(24 - activeH, 0, 24);
 
+    // Seasonal things (a heater, a fan, an air conditioner) only run part of the
+    // year. weeksPerYear scales the yearly figures without touching the in-use
+    // day, so a heater on for 17 weeks isn't costed as if it ran in July too.
+    var weeksPerYear = a.weeksPerYear == null ? 52 : clamp(num(a.weeksPerYear, 52), 0, 52);
+    var daysPerYear = DAYS_PER_YEAR * (weeksPerYear / 52);
+
     var activeKwhDay = (watts / 1000) * activeH * qty;
     var standbyKwhDay = (standbyWatts / 1000) * standbyH * qty;
     var kwhDay = activeKwhDay + standbyKwhDay;
@@ -65,10 +71,12 @@
       quantity: qty,
       activeHoursPerDay: activeH,
       standbyHoursPerDay: standbyH,
+      weeksPerYear: weeksPerYear,
+      daysPerYear: daysPerYear,
       activeKwhDay: activeKwhDay,
       standbyKwhDay: standbyKwhDay,
       kwhDay: kwhDay,
-      kwhYear: kwhDay * DAYS_PER_YEAR
+      kwhYear: kwhDay * daysPerYear
     };
   }
 
@@ -77,7 +85,7 @@
     var rate = Math.max(0, num(unitRate));
     var e = applianceEnergy(a);
     var costDay = e.kwhDay * rate;
-    var standbyCostYear = e.standbyKwhDay * DAYS_PER_YEAR * rate;
+    var standbyCostYear = e.standbyKwhDay * e.daysPerYear * rate;
     return {
       name: a.name || "This",
       energy: e,
@@ -85,7 +93,7 @@
       costMonth: (e.kwhYear * rate) / 12,
       costYear: e.kwhYear * rate,
       standbyCostYear: standbyCostYear,
-      standbyShare: e.kwhYear > 0 ? (e.standbyKwhDay * DAYS_PER_YEAR) / e.kwhYear : 0
+      standbyShare: e.kwhYear > 0 ? (e.standbyKwhDay * e.daysPerYear) / e.kwhYear : 0
     };
   }
 
@@ -129,7 +137,7 @@
           c.costDay = c.energy.kwhDay * blended;
           c.costYear = c.energy.kwhYear * blended;
           c.costMonth = c.costYear / 12;
-          c.standbyCostYear = c.energy.standbyKwhDay * DAYS_PER_YEAR * blended;
+          c.standbyCostYear = c.energy.standbyKwhDay * c.energy.daysPerYear * blended;
         }
         return c;
       })
