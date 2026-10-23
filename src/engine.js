@@ -107,6 +107,44 @@
     return Math.max(0, num(kg)) / KG_CO2_PER_MILE;
   }
 
+  // Worth replacing a working thing with a more efficient one? A new fridge or
+  // washing machine costs money up front but runs cheaper, so the question is
+  // how long the lower running cost takes to pay back the price, and whether
+  // that happens inside the new thing's life. This does only that sum; it makes
+  // up no prices and no savings. Give the replacement either as a new yearly
+  // running cost, or as a percent less energy than the current one.
+  function replacePayback(opts) {
+    opts = opts || {};
+    var currentYear = Math.max(0, num(opts.currentYearlyCost));
+    var newYear;
+    if (opts.replacementYearlyCost != null && opts.replacementYearlyCost !== "") {
+      newYear = Math.max(0, num(opts.replacementYearlyCost));
+    } else if (opts.percentLess != null && opts.percentLess !== "") {
+      newYear = currentYear * (1 - clamp(num(opts.percentLess), 0, 100) / 100);
+    } else {
+      newYear = currentYear;
+    }
+    var price = Math.max(0, num(opts.price));
+    var life = opts.lifeYears != null && opts.lifeYears !== "" ? Math.max(0, num(opts.lifeYears)) : null;
+
+    var yearlySaving = round(currentYear - newYear, 2);
+    var paybackYears = yearlySaving > 0 ? round(price / yearlySaving, 1) : null;
+    var lifetimeNet = life != null && yearlySaving !== 0 ? round(yearlySaving * life - price, 2) : null;
+    // Worth it if it pays back at all, and inside the life if a life is given.
+    var worthIt = paybackYears != null && (life == null || paybackYears <= life);
+
+    return {
+      currentYear: round(currentYear, 2),
+      newYear: round(newYear, 2),
+      yearlySaving: yearlySaving,
+      price: round(price, 2),
+      paybackYears: paybackYears,
+      lifeYears: life,
+      lifetimeNet: lifetimeNet,
+      worthIt: worthIt
+    };
+  }
+
   // The whole picture: every appliance costed and sorted dearest first, the
   // running total, the standby total, the standing charge kept on its own, and
   // the carbon if a grid emission factor is given.
@@ -199,6 +237,7 @@
     applianceCost: applianceCost,
     billSummary: billSummary,
     drivingMilesForCo2: drivingMilesForCo2,
+    replacePayback: replacePayback,
     round: round
   };
 });
