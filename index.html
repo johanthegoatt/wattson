@@ -88,6 +88,37 @@
     <p class="status" id="status" role="status"></p>
     <p class="fine">A guide, not a promise. Fridges, heaters and anything with a thermostat switch on and off, so a yearly figure is an estimate. Your real bill also carries tax and any fixed fees.</p>
   </section>
+
+  <section class="card" id="step-replace" aria-labelledby="h-replace">
+    <h2 id="h-replace"><span class="num">4</span> Worth replacing?</h2>
+    <p class="hint">A newer, more efficient thing costs money now but runs cheaper. See how long that saving takes to pay back the price. Nothing here is a promise; put in your own prices.</p>
+    <div class="row">
+      <label class="field">
+        <span>What it costs to run now, a year</span>
+        <div class="money"><i aria-hidden="true" class="cur">$</i><input id="rp-current" inputmode="decimal" autocomplete="off" placeholder="120"></div>
+      </label>
+      <label class="field">
+        <span>The new one uses this much less</span>
+        <div class="money"><input id="rp-less" inputmode="numeric" autocomplete="off" placeholder="30" style="padding-left:12px"><i aria-hidden="true" class="cur" style="left:auto;right:12px">%</i></div>
+      </label>
+      <label class="field">
+        <span>Price of the new one</span>
+        <div class="money"><i aria-hidden="true" class="cur">$</i><input id="rp-price" inputmode="decimal" autocomplete="off" placeholder="400"></div>
+      </label>
+      <label class="field">
+        <span>How long it should last <small>(years)</small></span>
+        <input id="rp-life" inputmode="numeric" autocomplete="off" placeholder="10">
+      </label>
+    </div>
+    <button type="button" class="btn ghost" id="rp-fill">Use my dearest thing</button>
+    <div class="headline" id="rp-out" hidden>
+      <div class="hl-main">
+        <span class="hl-label" id="rp-verdict">Payback</span>
+        <span class="hl-amount" id="rp-payback">—</span>
+        <span class="hl-sub" id="rp-detail"></span>
+      </div>
+    </div>
+  </section>
 </main>
 
 <footer class="foot">

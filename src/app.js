@@ -336,6 +336,43 @@
     copyText(location.href, "Share link copied.", "shared");
   });
 
+  // ---- worth replacing? ----
+  var rpCurrent = $("rp-current"), rpLess = $("rp-less"), rpPrice = $("rp-price"), rpLife = $("rp-life"), rpOut = $("rp-out");
+  function rpCompute() {
+    var cur = parseFloat(rpCurrent.value) || 0;
+    var price = parseFloat(rpPrice.value) || 0;
+    if (cur <= 0 || price <= 0) { rpOut.hidden = true; return; }
+    var r = E.replacePayback({ currentYearlyCost: cur, percentLess: rpLess.value, price: price, lifeYears: rpLife.value });
+    rpOut.hidden = false;
+    if (r.paybackYears == null) {
+      $("rp-verdict").textContent = "No saving yet";
+      $("rp-payback").textContent = "—";
+      $("rp-detail").textContent = "With no saving a year, a new one never pays for itself. Check the new one really uses less than the old.";
+      return;
+    }
+    $("rp-verdict").textContent = r.worthIt ? "Pays back in" : "Slow to pay back";
+    $("rp-payback").textContent = r.paybackYears + (r.paybackYears === 1 ? " year" : " years");
+    var d = "Saves " + money(r.yearlySaving) + " a year.";
+    if (r.lifeYears != null) {
+      d += r.worthIt
+        ? " Over " + r.lifeYears + " years that's " + money(r.lifetimeNet) + " saved after the price."
+        : " It needs " + r.paybackYears + " years, but you expect " + r.lifeYears + ", so it loses about " + money(Math.abs(r.lifetimeNet)) + " over its life.";
+    }
+    $("rp-detail").textContent = d;
+  }
+  [rpCurrent, rpLess, rpPrice, rpLife].forEach(function (el) { el.addEventListener("input", rpCompute); });
+  $("rp-fill").addEventListener("click", function () {
+    var rate = parseFloat(rateEl.value) || 0;
+    var s = E.billSummary(items.map(readItem), { unitRate: rate, standingChargeDay: 0, co2PerKwh: 0 });
+    if (s.appliances.length && s.appliances[0].costYear > 0) {
+      rpCurrent.value = E.round(s.appliances[0].costYear, 2);
+      rpCompute();
+      Watt.react("copied");
+    } else {
+      status("Add a thing and a rate up top first, then I can fill this in.");
+    }
+  });
+
   // Start: reopen a shared list, or seed a couple so the page isn't blank.
   var loaded = loadFromHash();
   if (!loaded) {
