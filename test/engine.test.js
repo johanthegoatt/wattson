@@ -195,3 +195,36 @@ test("weeks per year is clamped to a real range", function () {
   assert.strictEqual(E.applianceEnergy({ watts: 10, hoursPerDay: 1, weeksPerYear: 200 }).weeksPerYear, 52);
   assert.strictEqual(E.applianceEnergy({ watts: 10, hoursPerDay: 1, weeksPerYear: -5 }).weeksPerYear, 0);
 });
+
+test("replace payback: price over the yearly saving is the payback time", function () {
+  // Old costs 120/yr, new 80/yr -> saves 40/yr. A 200 fridge pays back in 5 years.
+  var r = E.replacePayback({ currentYearlyCost: 120, replacementYearlyCost: 80, price: 200 });
+  assert.strictEqual(r.yearlySaving, 40);
+  assert.strictEqual(r.paybackYears, 5);
+});
+
+test("replace payback accepts a percent-less figure", function () {
+  // 30% less than 100/yr is 70/yr, saving 30. A 150 price pays back in 5 years.
+  var r = E.replacePayback({ currentYearlyCost: 100, percentLess: 30, price: 150 });
+  assert.strictEqual(r.newYear, 70);
+  assert.strictEqual(r.yearlySaving, 30);
+  assert.strictEqual(r.paybackYears, 5);
+});
+
+test("replace payback: no saving means no payback and not worth it", function () {
+  var r = E.replacePayback({ currentYearlyCost: 90, replacementYearlyCost: 90, price: 200 });
+  assert.strictEqual(r.yearlySaving, 0);
+  assert.strictEqual(r.paybackYears, null);
+  assert.strictEqual(r.worthIt, false);
+});
+
+test("replace payback: worth it only if it pays back inside the life", function () {
+  // Saves 40/yr, pays back a 200 price in 5 years; a 10-year life clears it.
+  var good = E.replacePayback({ currentYearlyCost: 120, replacementYearlyCost: 80, price: 200, lifeYears: 10 });
+  assert.strictEqual(good.worthIt, true);
+  assert.strictEqual(good.lifetimeNet, 200); // 40*10 - 200
+  // Same saving but a 1000 price never pays back inside 10 years.
+  var bad = E.replacePayback({ currentYearlyCost: 120, replacementYearlyCost: 80, price: 1000, lifeYears: 10 });
+  assert.strictEqual(bad.worthIt, false);
+  assert.strictEqual(bad.lifetimeNet, -600); // 40*10 - 1000
+});
