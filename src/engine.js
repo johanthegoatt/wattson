@@ -188,6 +188,14 @@
     var standingYear = standingDay * DAYS_PER_YEAR;
     var totalYear = runningYear + standingYear;
 
+    // VAT (or sales tax) on the energy bill. The unit rate and standing charge
+    // are usually quoted before tax, and it lands on the whole bill: in the UK
+    // domestic energy is the reduced 5% rate (HMRC VAT Notice 701/19), not the
+    // 20% standard rate. Left at 0 nothing changes and the totals stay pre-tax.
+    var vatPercent = Math.max(0, num(opts.vatPercent));
+    var vatYear = totalYear * vatPercent / 100;
+    var grossTotalYear = totalYear + vatYear;
+
     // What the running cost would be with everything on the day rate, and so
     // how much the night rate is saving across the year. Zero when no night
     // rate is set, or when nothing is marked as running overnight.
@@ -222,6 +230,11 @@
       economySavingYear: economySavingYear,
       totalYear: totalYear,
       totalMonth: totalYear / 12,
+      vatPercent: vatPercent,
+      vatYear: vatYear,
+      vatUsed: vatPercent > 0,
+      grossTotalYear: grossTotalYear,
+      grossTotalMonth: grossTotalYear / 12,
       co2Year: co2Year,
       co2FactorPerKwh: co2Factor,
       drivingMilesYear: drivingMilesForCo2(co2Year)
