@@ -14,6 +14,7 @@
   var curPick = $("cur-pick");
   var rateEl = $("rate");
   var standingEl = $("standing");
+  var vatEl = $("vat");
   var nightEl = $("night-rate");
 
   var currency = "$";
@@ -111,6 +112,7 @@
   function recompute() {
     var rate = parseFloat(rateEl.value) || 0;
     var standing = parseFloat(standingEl.value) || 0;
+    var vat = parseFloat(vatEl.value) || 0;
     var nightRaw = nightEl.value.trim();
     var nightRate = nightRaw === "" ? null : (parseFloat(nightRaw) || 0);
     var appliances = items.map(readItem);
@@ -122,7 +124,7 @@
     $("night-hint").hidden = !showNight;
     items.forEach(function (item) { item.nightWrap.hidden = !showNight; });
 
-    var summary = E.billSummary(appliances, { unitRate: rate, standingChargeDay: standing, co2PerKwh: co2Factor(), nightRate: nightRate });
+    var summary = E.billSummary(appliances, { unitRate: rate, standingChargeDay: standing, co2PerKwh: co2Factor(), nightRate: nightRate, vatPercent: vat });
 
     // per-row live cost, at the night rate when it's ticked and in use
     items.forEach(function (item) {
@@ -163,11 +165,13 @@
     }
 
     head.hidden = false;
-    $("hl-year").textContent = money(s.totalYear);
+    $("hl-year").textContent = money(s.vatUsed ? s.grossTotalYear : s.totalYear);
     var runMonth = money(s.runningCostMonth);
-    $("hl-month").textContent = standing > 0
-      ? "About " + money(s.totalMonth) + " a month, standing charge and all."
-      : "About " + money(s.totalMonth) + " a month.";
+    var monthFig = money(s.vatUsed ? s.grossTotalMonth : s.totalMonth);
+    var tail = s.vatUsed
+      ? " a month, " + (standing > 0 ? "standing charge and " : "") + s.vatPercent + "% VAT and all."
+      : (standing > 0 ? " a month, standing charge and all." : " a month.");
+    $("hl-month").textContent = "About " + monthFig + tail;
     var co2El = $("hl-co2");
     if (s.co2Year > 0) {
       var kg = Math.round(s.co2Year);
@@ -235,9 +239,10 @@
   function plainText() {
     var rate = parseFloat(rateEl.value) || 0;
     var standing = parseFloat(standingEl.value) || 0;
+    var vat = parseFloat(vatEl.value) || 0;
     var nightRaw = nightEl.value.trim();
     var nightRate = nightRaw === "" ? null : (parseFloat(nightRaw) || 0);
-    var s = E.billSummary(items.map(readItem), { unitRate: rate, standingChargeDay: standing, co2PerKwh: co2Factor(), nightRate: nightRate });
+    var s = E.billSummary(items.map(readItem), { unitRate: rate, standingChargeDay: standing, co2PerKwh: co2Factor(), nightRate: nightRate, vatPercent: vat });
     var lines = ["What it costs to run (Wattson)", ""];
     s.appliances.forEach(function (c) {
       lines.push("- " + c.name + ": " + money(c.costYear) + "/yr" +
