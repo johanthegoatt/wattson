@@ -228,3 +228,25 @@ test("replace payback: worth it only if it pays back inside the life", function 
   assert.strictEqual(bad.worthIt, false);
   assert.strictEqual(bad.lifetimeNet, -600); // 40*10 - 1000
 });
+
+test("VAT is added to the whole bill, leaving the pre-tax totals intact", function () {
+  var base = [{ name: "Fridge", watts: 100, hoursPerDay: 24 }];
+  var opts = { unitRate: 0.3, standingChargeDay: 0.6 };
+  var plain = E.billSummary(base, opts);
+  var taxed = E.billSummary(base, Object.assign({ vatPercent: 5 }, opts));
+  // Pre-tax total is the same either way.
+  assert.strictEqual(E.round(taxed.totalYear), E.round(plain.totalYear));
+  // VAT is 5% of running + standing, and the gross is the sum.
+  assert.ok(Math.abs(taxed.vatYear - plain.totalYear * 0.05) < 1e-9);
+  assert.ok(Math.abs(taxed.grossTotalYear - plain.totalYear * 1.05) < 1e-9);
+  assert.ok(Math.abs(taxed.grossTotalMonth - taxed.grossTotalYear / 12) < 1e-9);
+  assert.strictEqual(taxed.vatUsed, true);
+  assert.strictEqual(taxed.vatPercent, 5);
+});
+
+test("with no VAT the gross equals the pre-tax total and nothing changes", function () {
+  var s = E.billSummary([{ name: "Fridge", watts: 100, hoursPerDay: 24 }], { unitRate: 0.3 });
+  assert.strictEqual(s.vatUsed, false);
+  assert.strictEqual(s.vatYear, 0);
+  assert.strictEqual(s.grossTotalYear, s.totalYear);
+});
