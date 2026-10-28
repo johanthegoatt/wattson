@@ -41,10 +41,55 @@
   // hoursPerDay directly, or hoursPerWeek which we spread across seven days so
   // a "twice a week" oven is counted honestly, not as if it ran every day.
   function activeHoursPerDay(a) {
-    if (a.hoursPerWeek != null && a.hoursPerDay == null) {
-      return clamp(num(a.hoursPerWeek) / 7, 0, 24);
+    var perWeek = hoursPerWeekOf(a);
+    if (perWeek != null && a.hoursPerDay == null) {
+      return clamp(perWeek / 7, 0, 24);
     }
     return clamp(num(a.hoursPerDay), 0, 24);
+  }
+
+  // Hours a week a thing runs. Given directly as hoursPerWeek, or worked out
+  // from a wash/dry/dishwasher pattern of a number of runs a week, each a set
+  // length (runsPerWeek x hoursPerRun). Null when neither is given.
+  function hoursPerWeekOf(a) {
+    if (a.hoursPerWeek != null) return num(a.hoursPerWeek);
+    if (a.runsPerWeek != null && a.hoursPerRun != null) {
+      return Math.max(0, num(a.runsPerWeek)) * Math.max(0, num(a.hoursPerRun));
+    }
+    return null;
+  }
+
+  // The length of one run, in hours: given as hoursPerRun, or split out of a
+  // weekly total divided by the runs. Null when the thing isn't run in loads.
+  function hoursPerRunOf(a) {
+    if (a.runsPerWeek == null) return null;
+    var runs = Math.max(0, num(a.runsPerWeek));
+    if (runs <= 0) return null;
+    if (a.hoursPerRun != null) return Math.max(0, num(a.hoursPerRun));
+    if (a.hoursPerWeek != null) return Math.max(0, num(a.hoursPerWeek)) / runs;
+    return null;
+  }
+
+  // Energy and, with a rate, cost for a single run of a load appliance (a wash,
+  // a dry cycle, a dishwasher load). This is how appliance energy labels quote
+  // these things, and it's the number people actually recognise ("about 40p a
+  // wash"). Null for anything not run in loads.
+  function cycleCost(a, unitRate) {
+    if (a.runsPerWeek == null) return null;
+    var runs = Math.max(0, num(a.runsPerWeek));
+    var hoursPerRun = hoursPerRunOf(a);
+    if (hoursPerRun == null) return null;
+    var qty = Math.max(1, Math.round(num(a.quantity, 1)));
+    var watts = Math.max(0, num(a.watts));
+    var kwhPerCycle = (watts / 1000) * hoursPerRun * qty;
+    var rate = Math.max(0, num(unitRate));
+    return {
+      runsPerWeek: runs,
+      hoursPerRun: hoursPerRun,
+      kwhPerCycle: kwhPerCycle,
+      costPerCycle: kwhPerCycle * rate,
+      costPerWeek: kwhPerCycle * runs * rate
+    };
   }
 
   // Energy for one appliance, split into the part you meant to use (active)
@@ -93,7 +138,8 @@
       costMonth: (e.kwhYear * rate) / 12,
       costYear: e.kwhYear * rate,
       standbyCostYear: standbyCostYear,
-      standbyShare: e.kwhYear > 0 ? (e.standbyKwhDay * e.daysPerYear) / e.kwhYear : 0
+      standbyShare: e.kwhYear > 0 ? (e.standbyKwhDay * e.daysPerYear) / e.kwhYear : 0,
+      cycle: cycleCost(a, unitRate)
     };
   }
 
@@ -246,6 +292,9 @@
     WEEKS_PER_YEAR: WEEKS_PER_YEAR,
     KG_CO2_PER_MILE: KG_CO2_PER_MILE,
     activeHoursPerDay: activeHoursPerDay,
+    hoursPerWeekOf: hoursPerWeekOf,
+    hoursPerRunOf: hoursPerRunOf,
+    cycleCost: cycleCost,
     applianceEnergy: applianceEnergy,
     applianceCost: applianceCost,
     billSummary: billSummary,
