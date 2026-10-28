@@ -250,3 +250,32 @@ test("with no VAT the gross equals the pre-tax total and nothing changes", funct
   assert.strictEqual(s.vatYear, 0);
   assert.strictEqual(s.grossTotalYear, s.totalYear);
 });
+
+test("a load appliance gets a per-cycle energy and cost", function () {
+  // 2500 W dryer, 1 h a run, 3 runs a week, at 30p/kWh: 2.5 kWh and 75p a cycle.
+  var c = E.cycleCost({ watts: 2500, runsPerWeek: 3, hoursPerRun: 1 }, 0.3);
+  assert.strictEqual(E.round(c.kwhPerCycle, 3), 2.5);
+  assert.strictEqual(E.round(c.costPerCycle, 2), 0.75);
+  assert.strictEqual(E.round(c.costPerWeek, 2), 2.25);
+});
+
+test("runs-a-week times run-length drives the weekly hours and the yearly cost", function () {
+  // 3 runs x 1 h = 3 h/week, same as giving hoursPerWeek: 3 directly.
+  var viaRuns = E.applianceEnergy({ watts: 2500, runsPerWeek: 3, hoursPerRun: 1 });
+  var viaWeek = E.applianceEnergy({ watts: 2500, hoursPerWeek: 3 });
+  assert.strictEqual(E.round(viaRuns.kwhYear, 3), E.round(viaWeek.kwhYear, 3));
+});
+
+test("hoursPerRun is split out of a weekly total when not given directly", function () {
+  assert.strictEqual(E.hoursPerRunOf({ runsPerWeek: 4, hoursPerWeek: 6 }), 1.5);
+});
+
+test("an appliance that isn't run in loads has no cycle cost", function () {
+  assert.strictEqual(E.cycleCost({ watts: 100, hoursPerDay: 24 }, 0.3), null);
+});
+
+test("applianceCost carries the per-cycle breakdown for a load appliance", function () {
+  var r = E.applianceCost({ name: "Dishwasher", watts: 1200, runsPerWeek: 7, hoursPerRun: 1 }, 0.3);
+  assert.ok(r.cycle, "has a cycle breakdown");
+  assert.strictEqual(E.round(r.cycle.kwhPerCycle, 2), 1.2);
+});
