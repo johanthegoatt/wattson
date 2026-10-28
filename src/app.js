@@ -62,9 +62,14 @@
 
     fields.name.value = data.name || "";
     fields.watts.value = data.watts != null ? data.watts : "";
-    // hoursPerWeek presets are shown as a daily figure people can read.
+    // A load appliance (a wash, a dry cycle) is given as runs a week x the run
+    // length; remember the runs so the per-load cost can be shown, and still
+    // display a daily figure people can read and edit.
+    item.cycleRuns = data.runsPerWeek != null ? Math.max(0, +data.runsPerWeek) || 0 : null;
+    var weekHours = data.hoursPerWeek != null ? data.hoursPerWeek
+      : (data.runsPerWeek != null && data.hoursPerRun != null) ? data.runsPerWeek * data.hoursPerRun : null;
     var h = data.hoursPerDay != null ? data.hoursPerDay
-      : data.hoursPerWeek != null ? Math.round((data.hoursPerWeek / 7) * 100) / 100 : "";
+      : weekHours != null ? Math.round((weekHours / 7) * 100) / 100 : "";
     fields.hours.value = h;
     fields.standby.value = data.standbyWatts != null ? data.standbyWatts : "";
     fields.qty.value = data.quantity != null ? data.quantity : "";
@@ -95,15 +100,23 @@
 
   function readItem(item) {
     var f = item.fields;
-    return {
+    var hoursPerDay = f.hours.value === "" ? 0 : parseFloat(f.hours.value) || 0;
+    var out = {
       name: f.name.value.trim() || "This",
       watts: parseFloat(f.watts.value) || 0,
-      hoursPerDay: f.hours.value === "" ? 0 : parseFloat(f.hours.value) || 0,
+      hoursPerDay: hoursPerDay,
       standbyWatts: f.standby.value === "" ? 0 : parseFloat(f.standby.value) || 0,
       quantity: parseInt(f.qty.value, 10) || 1,
       weeksPerYear: f.season ? (parseInt(f.season.value, 10) || 52) : 52,
       nightShare: f.night && f.night.checked ? 1 : 0
     };
+    // For a load appliance, split the current daily hours back into a per-run
+    // length so the per-cycle cost tracks whatever hours the user has set.
+    if (item.cycleRuns > 0) {
+      out.runsPerWeek = item.cycleRuns;
+      out.hoursPerRun = (hoursPerDay * 7) / item.cycleRuns;
+    }
+    return out;
   }
 
   // ---- compute + render ----
@@ -197,8 +210,12 @@
       if (isBig && s.appliances.length > 2) tags += '<span class="tag big">one of the big ones</span>';
       if (c.standbyShare >= 0.25 && c.standbyCostYear > 0) tags += ' <span class="tag warn">mostly standby</span>';
       var note = "";
+      if (c.cycle && c.cycle.costPerCycle > 0) {
+        note = "About " + moneyPrecise(c.cycle.costPerCycle) + " a load (" +
+          c.cycle.runsPerWeek + (c.cycle.runsPerWeek === 1 ? " load" : " loads") + " a week).";
+      }
       if (c.standbyCostYear > 0) {
-        note = "Standby alone is " + money(c.standbyCostYear) + " a year of that.";
+        note += (note ? " " : "") + "Standby alone is " + money(c.standbyCostYear) + " a year of that.";
       }
       row.innerHTML =
         '<div class="b-main"><h3>' + esc(c.name) + " " + tags + "</h3>" +
