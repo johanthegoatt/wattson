@@ -279,3 +279,30 @@ test("applianceCost carries the per-cycle breakdown for a load appliance", funct
   assert.ok(r.cycle, "has a cycle breakdown");
   assert.strictEqual(E.round(r.cycle.kwhPerCycle, 2), 1.2);
 });
+
+test("consumptionBand places a total against Ofgem's single-rate TDCV", function () {
+  // From 1 July 2026: single-rate low 1600, medium 2500, high 3800 kWh/year.
+  assert.strictEqual(E.consumptionBand(1200).band, "low");
+  assert.strictEqual(E.consumptionBand(2500).band, "medium");
+  assert.strictEqual(E.consumptionBand(5000).band, "high");
+  assert.strictEqual(E.consumptionBand(2500).medium, 2500);
+  assert.strictEqual(E.consumptionBand(2500).vsMedium, 0);
+});
+
+test("a night rate switches the benchmark to the multi-rate TDCV", function () {
+  // Economy 7 / multi-rate medium is 3400, so 3500 kWh reads medium there but
+  // high against the single-rate 2500 medium.
+  assert.strictEqual(E.consumptionBand(3500, false).band, "high");
+  assert.strictEqual(E.consumptionBand(3500, true).band, "medium");
+  assert.strictEqual(E.consumptionBand(3500, true).medium, 3400);
+});
+
+test("billSummary carries the typical-home benchmark, multi-rate when a night rate is set", function () {
+  var apps = [{ name: "Heater", watts: 2000, hoursPerDay: 3 }];
+  var single = E.billSummary(apps, { unitRate: 0.3 });
+  assert.ok(single.benchmark, "has a benchmark");
+  assert.strictEqual(single.benchmark.profile, "single");
+  assert.strictEqual(E.round(single.benchmark.kwhYear, 0), E.round(single.kwhYear, 0));
+  var multi = E.billSummary(apps, { unitRate: 0.3, nightRate: 0.15 });
+  assert.strictEqual(multi.benchmark.profile, "multi");
+});
