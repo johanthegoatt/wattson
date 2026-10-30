@@ -242,6 +242,21 @@
     } else {
       traps.push("<b>The standing charge is separate.</b> Add yours at the top if your bill has one; it's a daily fee you pay whatever you use, so keep it out of your per-thing sums.");
     }
+    // Where the tracked total sits against a typical home (Ofgem TDCV, 2026).
+    if (hasResult && s.kwhYear > 0) {
+      var bm = s.benchmark;
+      var kwh = Math.round(s.kwhYear).toLocaleString();
+      var med = bm.medium.toLocaleString();
+      var profile = bm.profile === "multi" ? "Economy 7 home" : "typical home";
+      var where = bm.band === "low"
+        ? "below"
+        : bm.band === "high"
+          ? "above"
+          : "about";
+      traps.push("<b>Against a " + profile + ".</b> The appliances you've listed come to about <b>" + kwh +
+        " kWh a year</b>, " + where + " a " + profile + "'s " + med + " kWh (Ofgem's 2026 typical value). " +
+        "This only counts what you've added, so the rest of the home sits on top of it.");
+    }
     $("trap-list").innerHTML = traps.map(function (t) { return "<li>" + t + "</li>"; }).join("");
     $("traps").hidden = !hasResult;
   }
@@ -267,6 +282,9 @@
     });
     lines.push("");
     lines.push("Running cost: " + money(s.runningCostYear) + "/yr");
+    if (s.kwhYear > 0) lines.push("Tracked use: " + Math.round(s.kwhYear).toLocaleString() + " kWh/yr (" +
+      s.benchmark.band + " vs a " + (s.benchmark.profile === "multi" ? "multi-rate" : "typical") +
+      " home's " + s.benchmark.medium.toLocaleString() + " kWh, Ofgem 2026)");
     if (s.standbyCostYear > 0) lines.push("Of that, standby: " + money(s.standbyCostYear) + "/yr");
     if (s.standingChargeYear > 0) lines.push("Standing charge: " + money(s.standingChargeYear) + "/yr (fixed)");
     if (s.nightRateUsed && s.economySavingYear > 0.5) lines.push("Night rate saving: " + money(s.economySavingYear) + "/yr vs the day rate");
