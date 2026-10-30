@@ -153,6 +153,37 @@
     return Math.max(0, num(kg)) / KG_CO2_PER_MILE;
   }
 
+  // Ofgem's Typical Domestic Consumption Values (TDCV) for electricity, so a
+  // tracked total can be placed against a whole typical home. Single-rate (one
+  // meter) and multi-rate (Economy 7 and the like, which tend to run more
+  // electric heating) have their own bands. These are the values in force from
+  // 1 July 2026: single-rate low 1600, medium 2500, high 3800 kWh a year;
+  // multi-rate 1900 / 3400 / 6100. (Ofgem, July 2026 TDCV review.)
+  var TDCV = {
+    single: { low: 1600, medium: 2500, high: 3800 },
+    multi: { low: 1900, medium: 3400, high: 6100 }
+  };
+
+  function consumptionBand(kwhYear, multiRate) {
+    var t = multiRate ? TDCV.multi : TDCV.single;
+    var kwh = Math.max(0, num(kwhYear));
+    // Place against the typical home: below the low/medium midpoint is "low",
+    // up to the medium/high midpoint is "medium" (around a typical home),
+    // above that is "high".
+    var band = kwh < (t.low + t.medium) / 2 ? "low"
+      : kwh <= (t.medium + t.high) / 2 ? "medium" : "high";
+    return {
+      kwhYear: kwh,
+      profile: multiRate ? "multi" : "single",
+      low: t.low,
+      medium: t.medium,
+      high: t.high,
+      band: band,
+      vsMedium: kwh - t.medium,
+      ratioToMedium: t.medium > 0 ? kwh / t.medium : 0
+    };
+  }
+
   // Worth replacing a working thing with a more efficient one? A new fridge or
   // washing machine costs money up front but runs cheaper, so the question is
   // how long the lower running cost takes to pay back the price, and whether
@@ -283,7 +314,12 @@
       grossTotalMonth: grossTotalYear / 12,
       co2Year: co2Year,
       co2FactorPerKwh: co2Factor,
-      drivingMilesYear: drivingMilesForCo2(co2Year)
+      drivingMilesYear: drivingMilesForCo2(co2Year),
+      // How the tracked electricity sits against a typical home. A night rate
+      // is taken as a multi-rate (Economy 7) meter, which has higher typical
+      // values. This counts only the appliances listed, so it reads low against
+      // a whole-home figure unless everything is entered.
+      benchmark: consumptionBand(kwhYear, nightRateUsed)
     };
   }
 
@@ -298,6 +334,8 @@
     applianceEnergy: applianceEnergy,
     applianceCost: applianceCost,
     billSummary: billSummary,
+    TDCV: TDCV,
+    consumptionBand: consumptionBand,
     drivingMilesForCo2: drivingMilesForCo2,
     replacePayback: replacePayback,
     round: round
