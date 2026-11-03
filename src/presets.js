@@ -32,7 +32,13 @@
     { name: "LED bulb", watts: 8, standbyWatts: 0, hoursPerDay: 5, quantity: 1 },
     { name: "Space heater", watts: 2000, standbyWatts: 0, hoursPerDay: 3, weeksPerYear: 17, note: "usually only the cold months" },
     { name: "Air conditioner", watts: 1000, standbyWatts: 2, hoursPerDay: 5, weeksPerYear: 17, note: "usually only the warm months" },
-    { name: "Phone charger", watts: 10, standbyWatts: 0.3, hoursPerDay: 2, note: "the trickle it pulls left in the wall is tiny but never stops" }
+    { name: "Phone charger", watts: 10, standbyWatts: 0.3, hoursPerDay: 2, note: "the trickle it pulls left in the wall is tiny but never stops" },
+    { name: "Hair dryer", watts: 1800, standbyWatts: 0, hoursPerDay: 0.1, note: "high power, but only a few minutes a day" },
+    { name: "Toaster", watts: 1000, standbyWatts: 0, hoursPerDay: 0.1 },
+    { name: "Air fryer", watts: 1500, standbyWatts: 1, hoursPerDay: 0.3, note: "cheaper per meal than the big oven for small amounts" },
+    { name: "Vacuum cleaner", watts: 900, standbyWatts: 0, hoursPerWeek: 1, note: "EU energy-label models are capped at 900 W" },
+    { name: "Slow cooker", watts: 200, standbyWatts: 0, runsPerWeek: 2, hoursPerRun: 8, note: "costed per use: low power over a long cook" },
+    { name: "Electric blanket", watts: 100, standbyWatts: 0, hoursPerDay: 1, weeksPerYear: 17, note: "usually only the cold months" }
   ];
 
   return { PRESETS: PRESETS };
