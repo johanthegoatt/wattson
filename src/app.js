@@ -189,7 +189,9 @@
     if (s.co2Year > 0) {
       var kg = Math.round(s.co2Year);
       var miles = Math.round(s.drivingMilesYear);
-      co2El.textContent = "About " + kg.toLocaleString() + " kg of CO₂ a year, like driving " + miles.toLocaleString() + " miles.";
+      var trees = Math.max(1, Math.round(s.treesYear));
+      co2El.textContent = "About " + kg.toLocaleString() + " kg of CO₂ a year, like driving " + miles.toLocaleString() +
+        " miles, or the work of about " + trees.toLocaleString() + " tree" + (trees === 1 ? "" : "s") + " for a year.";
       co2El.hidden = false;
     } else {
       co2El.textContent = "";
@@ -289,7 +291,7 @@
     if (s.standingChargeYear > 0) lines.push("Standing charge: " + money(s.standingChargeYear) + "/yr (fixed)");
     if (s.nightRateUsed && s.economySavingYear > 0.5) lines.push("Night rate saving: " + money(s.economySavingYear) + "/yr vs the day rate");
     lines.push("Total: " + money(s.totalYear) + "/yr at " + moneyPrecise(rate) + "/kWh");
-    if (s.co2Year > 0) lines.push("Carbon: about " + Math.round(s.co2Year).toLocaleString() + " kg CO2/yr (like driving " + Math.round(s.drivingMilesYear).toLocaleString() + " miles)");
+    if (s.co2Year > 0) lines.push("Carbon: about " + Math.round(s.co2Year).toLocaleString() + " kg CO2/yr (like driving " + Math.round(s.drivingMilesYear).toLocaleString() + " miles, or about " + Math.max(1, Math.round(s.treesYear)).toLocaleString() + " trees for a year)");
     return lines.join("\n");
   }
 
