@@ -153,6 +153,16 @@
     return Math.max(0, num(kg)) / KG_CO2_PER_MILE;
   }
 
+  // The same carbon, the other way round: how many trees working for a year it
+  // would take to soak it back up. A mature tree absorbs roughly 21 kg of CO2 a
+  // year (European Environment Agency; the Arbor Day Foundation's ~48 lb figure
+  // is the same ballpark), so a year's kWh becomes "the work of about N trees".
+  var KG_CO2_PER_TREE_YEAR = 21;
+
+  function treesForCo2(kg) {
+    return Math.max(0, num(kg)) / KG_CO2_PER_TREE_YEAR;
+  }
+
   // Ofgem's Typical Domestic Consumption Values (TDCV) for electricity, so a
   // tracked total can be placed against a whole typical home. Single-rate (one
   // meter) and multi-rate (Economy 7 and the like, which tend to run more
@@ -315,6 +325,7 @@
       co2Year: co2Year,
       co2FactorPerKwh: co2Factor,
       drivingMilesYear: drivingMilesForCo2(co2Year),
+      treesYear: treesForCo2(co2Year),
       // How the tracked electricity sits against a typical home. A night rate
       // is taken as a multi-rate (Economy 7) meter, which has higher typical
       // values. This counts only the appliances listed, so it reads low against
@@ -327,6 +338,8 @@
     DAYS_PER_YEAR: DAYS_PER_YEAR,
     WEEKS_PER_YEAR: WEEKS_PER_YEAR,
     KG_CO2_PER_MILE: KG_CO2_PER_MILE,
+    KG_CO2_PER_TREE_YEAR: KG_CO2_PER_TREE_YEAR,
+    treesForCo2: treesForCo2,
     activeHoursPerDay: activeHoursPerDay,
     hoursPerWeekOf: hoursPerWeekOf,
     hoursPerRunOf: hoursPerRunOf,

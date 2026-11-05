@@ -110,12 +110,16 @@ test("carbon: kWh times the grid factor, and a driving comparison", function () 
   assert.ok(Math.abs(s.appliances[0].co2Year - 76.65) < 1e-6);
   // 76.65 kg / 0.4 kg per mile = 191.625 miles.
   assert.ok(Math.abs(s.drivingMilesYear - 191.625) < 1e-6);
+  // 76.65 kg / 21 kg per tree-year = 3.65 trees.
+  assert.ok(Math.abs(s.treesYear - 76.65 / 21) < 1e-6);
+  assert.ok(Math.abs(E.treesForCo2(42) - 2) < 1e-6);
 });
 
 test("no carbon factor means no carbon numbers, not a crash", function () {
   var s = E.billSummary([{ name: "Lamp", watts: 60, hoursPerDay: 5 }], { unitRate: 0.3 });
   assert.strictEqual(s.co2Year, 0);
   assert.strictEqual(s.drivingMilesYear, 0);
+  assert.strictEqual(s.treesYear, 0);
   assert.strictEqual(s.appliances[0].co2Year, 0);
 });
 
