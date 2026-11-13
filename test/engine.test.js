@@ -310,3 +310,12 @@ test("billSummary carries the typical-home benchmark, multi-rate when a night ra
   var multi = E.billSummary(apps, { unitRate: 0.3, nightRate: 0.15 });
   assert.strictEqual(multi.benchmark.profile, "multi");
 });
+
+test("the UK price cap preset carries the Oct-Dec 2026 electricity rates", function () {
+  var cap = E.UK_PRICE_CAP;
+  assert.ok(cap, "cap is exported");
+  assert.strictEqual(cap.currency, "£");
+  assert.strictEqual(cap.electricity.unitRate, 0.2632);
+  assert.strictEqual(cap.electricity.standingChargeDay, 0.5483);
+  assert.strictEqual(cap.electricity.vatPercent, 0);
+});

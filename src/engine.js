@@ -334,9 +334,23 @@
     };
   }
 
+  // The Ofgem energy price cap for Great Britain, average direct-debit rates,
+  // so someone who doesn't know their rate can start from a real number instead
+  // of a guess. Electricity carries no VAT for this period; the rate and
+  // standing charge are in pounds. Regional rates differ, so it's a starting
+  // point, not the exact figure on every bill. Source: Ofgem price cap, 1 Oct
+  // to 31 Dec 2026 (electricity 26.32p/kWh, 54.83p/day standing charge).
+  var UK_PRICE_CAP = {
+    period: "1 Oct – 31 Dec 2026",
+    currency: "£",
+    electricity: { unitRate: 0.2632, standingChargeDay: 0.5483, vatPercent: 0 },
+    source: "Ofgem energy price cap, Great Britain average, direct debit"
+  };
+
   return {
     DAYS_PER_YEAR: DAYS_PER_YEAR,
     WEEKS_PER_YEAR: WEEKS_PER_YEAR,
+    UK_PRICE_CAP: UK_PRICE_CAP,
     KG_CO2_PER_MILE: KG_CO2_PER_MILE,
     KG_CO2_PER_TREE_YEAR: KG_CO2_PER_TREE_YEAR,
     treesForCo2: treesForCo2,
