@@ -355,6 +355,26 @@
   setCurrency(curPick.value);
 
   curPick.addEventListener("change", function () { setCurrency(curPick.value); recompute(); });
+
+  // Fill the rate, standing charge and VAT from the current Ofgem price cap for
+  // anyone who doesn't know their own rate. A real starting number beats a
+  // guess; they can still type their exact figure over it.
+  var useCap = $("use-cap");
+  if (useCap) {
+    useCap.addEventListener("click", function () {
+      var cap = E.UK_PRICE_CAP;
+      if (!cap) return;
+      setCurrency(cap.currency); curPick.value = cap.currency;
+      rateEl.value = cap.electricity.unitRate;
+      standingEl.value = cap.electricity.standingChargeDay;
+      vatEl.value = cap.electricity.vatPercent;
+      var note = $("cap-note");
+      if (note) note.textContent = "Ofgem cap, " + cap.period + " (GB average). Your region may differ.";
+      recompute();
+      if (window.Watt) Watt.react("added");
+    });
+  }
+
   rateEl.addEventListener("input", recompute);
   standingEl.addEventListener("input", recompute);
   nightEl.addEventListener("input", recompute);
