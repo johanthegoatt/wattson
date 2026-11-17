@@ -38,7 +38,11 @@
     { name: "Air fryer", watts: 1500, standbyWatts: 1, hoursPerDay: 0.3, note: "cheaper per meal than the big oven for small amounts" },
     { name: "Vacuum cleaner", watts: 900, standbyWatts: 0, hoursPerWeek: 1, note: "EU energy-label models are capped at 900 W" },
     { name: "Slow cooker", watts: 200, standbyWatts: 0, runsPerWeek: 2, hoursPerRun: 8, note: "costed per use: low power over a long cook" },
-    { name: "Electric blanket", watts: 100, standbyWatts: 0, hoursPerDay: 1, weeksPerYear: 17, note: "usually only the cold months" }
+    { name: "Electric blanket", watts: 100, standbyWatts: 0, hoursPerDay: 1, weeksPerYear: 17, note: "usually only the cold months" },
+    { name: "Immersion heater", watts: 3000, standbyWatts: 0, hoursPerDay: 1.5, note: "heats the hot-water cylinder; a 3 kW element, often on a timer. One of the biggest draws people forget" },
+    { name: "Dehumidifier", watts: 250, standbyWatts: 1, hoursPerDay: 6, weeksPerYear: 26, note: "a compressor unit; runs for hours in the damp months and adds up quietly" },
+    { name: "Chest / upright freezer", watts: 100, standbyWatts: 0, hoursPerDay: 8, note: "cycles on and off like a fridge; this is a typical daily average for a separate freezer" },
+    { name: "Electric car (home charge)", watts: 7000, standbyWatts: 0, runsPerWeek: 3, hoursPerRun: 4, note: "a 7 kW home charger; about 28 kWh a charge, costed per charge" }
   ];
 
   return { PRESETS: PRESETS };

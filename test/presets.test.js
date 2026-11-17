@@ -18,7 +18,8 @@ test("every preset is well-formed and uses one usage spec", function () {
 
 test("the newly added appliances are present", function () {
   var names = P.map(function (a) { return a.name; });
-  ["Hair dryer", "Toaster", "Air fryer", "Vacuum cleaner", "Slow cooker", "Electric blanket"].forEach(function (n) {
+  ["Hair dryer", "Toaster", "Air fryer", "Vacuum cleaner", "Slow cooker", "Electric blanket",
+   "Immersion heater", "Dehumidifier", "Chest / upright freezer", "Electric car (home charge)"].forEach(function (n) {
     assert.ok(names.indexOf(n) >= 0, "has " + n);
   });
 });
