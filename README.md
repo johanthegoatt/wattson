@@ -31,7 +31,7 @@ cost         = energy (kWh) * unit rate
 ## How to use it
 
 1. Put in your price per kWh and, if your bill has one, the daily standing charge. Both are on the bill.
-2. Add the things in your home. Start from a common one (23 presets now, from the fridge and kettle to a hair dryer, toaster, air fryer, vacuum, slow cooker and electric blanket) and change the watts and hours to match yours, or add a blank row. The real watts are on the plug label or the maker's page.
+2. Add the things in your home. Start from a common one (27 presets now, from the fridge and kettle to a hair dryer, air fryer, slow cooker and electric blanket, and the big draws people forget: an immersion heater, a dehumidifier, a separate freezer and a home EV charge) and change the watts and hours to match yours, or add a blank row. The real watts are on the plug label or the maker's page.
 3. Read the total for the year, see which few things make up most of it, and check the two callouts.
 
 Everything runs in the browser. Nothing is uploaded; the share link carries your list in the address itself.
